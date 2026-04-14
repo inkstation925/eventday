@@ -69,23 +69,22 @@ export default function App() {
   document.body.style.fontFamily = "'DM Sans',sans-serif"
   document.body.style.margin = "0"
 
-  // Load data after auth
+  // Step 1: load studio when user is available
   useEffect(() => {
     if (!user) return
-    const init = async () => {
-      const s = await loadStudio()
-      if (!s) { setOnboarding(true); return }
-      document.title = config.studioName || s.name || "EventDay"
-      await Promise.all([
-        config.loadConfig(),
-        eventHook.loadEvent(),
-      ])
-      setAppReady(true)
-    }
-    init()
+    loadStudio().then(s => {
+      if (!s) setOnboarding(true)
+    })
   }, [user])
 
-  // Load bookings & donations after event loads
+  // Step 2: load config + event once studio is known (fires on refresh too)
+  useEffect(() => {
+    if (!studio?.id) return
+    Promise.all([config.loadConfig(), eventHook.loadEvent()])
+      .then(() => setAppReady(true))
+  }, [studio?.id])
+
+  // Step 3: load bookings & donations after event loads
   useEffect(() => {
     if (!eventHook.event?.id) return
     bookingsHook.loadBookings()
@@ -119,6 +118,7 @@ export default function App() {
   const handleOnboardingFinish = async (form) => {
     const { data: s } = await createStudio(form.studioName)
     if (!s) return
+    // studio?.id will update via re-render, trigger load manually here
     await config.loadConfig()
     await config.saveStudioName(form.studioName)
     await config.saveColors(form.accent, form.bg)
