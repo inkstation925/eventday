@@ -34,7 +34,6 @@ export function useBookings(studioId, eventId) {
       extra_field_2: form.extraField2||null,
       notes: form.notes||null, quantidade: form.quantidade||0,
       status: "pending", sinal_valor: sinalValor||50,
-      created_at: new Date().toISOString(),
     }
     const { data, error } = await supabase.from("bookings").insert([row]).select()
     if (!error && data) setBookings(p => [...p, mapBooking(data[0])])
