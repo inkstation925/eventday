@@ -15,7 +15,17 @@ export function SignupScreen({ onSignup, onGoLogin }) {
     if (pwd !== confirm)  { setErr("As senhas nao coincidem."); return }
     setLoading(true); setErr("")
     const { error } = await onSignup(email, pwd)
-    if (error) setErr(error.message || "Erro ao criar conta.")
+    if (error) {
+      const msg = error.message || ""
+      if (msg.includes("already registered") || msg.includes("already been registered"))
+        setErr("Este email ja esta cadastrado. Tente fazer login.")
+      else if (msg.includes("invalid email"))
+        setErr("Email invalido.")
+      else if (msg.includes("Password should be"))
+        setErr("Senha fraca. Use pelo menos 6 caracteres.")
+      else
+        setErr("Erro ao criar conta. Tente novamente.")
+    }
     setLoading(false)
   }
 
