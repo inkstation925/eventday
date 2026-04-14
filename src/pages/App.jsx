@@ -112,7 +112,7 @@ export default function App() {
 
   const handleSignup = async (email, pwd) => {
     const { data, error } = await signup(email, pwd)
-    if (!error) setPendingEmail(email)
+    if (!error && !data?.session) setPendingEmail(email)  // session = null means email confirmation required
     return { error }
   }
 
