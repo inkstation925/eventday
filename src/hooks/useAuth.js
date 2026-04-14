@@ -39,5 +39,10 @@ export function useAuth() {
     return { data, error }
   }
 
-  return { user, session, loading, login, signup, logout, updatePassword }
+  const resendVerification = async (email) => {
+    const { error } = await supabase.auth.resend({ type: "signup", email })
+    return { error }
+  }
+
+  return { user, session, loading, login, signup, logout, updatePassword, resendVerification }
 }

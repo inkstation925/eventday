@@ -10,6 +10,7 @@ import { sendReminderWhatsApp } from "../utils/whatsapp.js"
 
 import { LoginScreen }       from "../components/public/LoginScreen.jsx"
 import { SignupScreen }      from "../components/public/SignupScreen.jsx"
+import { VerifyEmailScreen } from "../components/public/VerifyEmailScreen.jsx"
 import { OnboardingWizard }  from "../components/public/OnboardingWizard.jsx"
 import { AgendaView }        from "../components/public/AgendaView.jsx"
 import { Toast }             from "../components/ui/Toast.jsx"
@@ -26,7 +27,7 @@ const ADMIN_TABS = ["bookings","doacoes","resumo","slots","settings"]
 const ADMIN_TAB_LABELS = { bookings:"Agendamentos", doacoes:"Doacoes", resumo:"Resumo", slots:"Slots", settings:"Config" }
 
 export default function App() {
-  const { user, loading: authLoading, login, signup, logout, updatePassword } = useAuth()
+  const { user, loading: authLoading, login, signup, logout, updatePassword, resendVerification } = useAuth()
   const { studio, loadStudio, createStudio, updateStudio } = useStudio(user)
   const config = useConfig(studio?.id)
   const eventHook = useEvent(studio?.id)
@@ -35,6 +36,7 @@ export default function App() {
 
   // UI state
   const [authScreen, setAuthScreen]   = useState("login") // "login" | "signup"
+  const [pendingEmail, setPendingEmail] = useState("")
   const [view, setView]               = useState("agenda")  // "agenda" | "admin"
   const [adminTab, setAdminTab]       = useState("bookings")
   const [onboarding, setOnboarding]   = useState(false)
@@ -110,7 +112,7 @@ export default function App() {
 
   const handleSignup = async (email, pwd) => {
     const { data, error } = await signup(email, pwd)
-    if (!error) setOnboarding(true)
+    if (!error) setPendingEmail(email)
     return { error }
   }
 
@@ -185,9 +187,18 @@ export default function App() {
   )
 
   // ── Not logged in ──
-  if (!user) return authScreen==="signup"
-    ? <SignupScreen onSignup={handleSignup} onGoLogin={()=>setAuthScreen("login")} />
-    : <LoginScreen  onLogin={handleLogin}  onGoSignup={()=>setAuthScreen("signup")} studioName={config.studioName} />
+  if (!user) {
+    if (pendingEmail) return (
+      <VerifyEmailScreen
+        email={pendingEmail}
+        onResend={resendVerification}
+        onBack={() => { setPendingEmail(""); setAuthScreen("login") }}
+      />
+    )
+    return authScreen==="signup"
+      ? <SignupScreen onSignup={handleSignup} onGoLogin={()=>setAuthScreen("login")} />
+      : <LoginScreen  onLogin={handleLogin}  onGoSignup={()=>setAuthScreen("signup")} studioName={config.studioName} />
+  }
 
   // ── Onboarding ──
   if (onboarding) return <OnboardingWizard onFinish={handleOnboardingFinish} />
