@@ -7,6 +7,7 @@ import { useEvent }     from "../hooks/useEvent.js"
 import { useBookings }  from "../hooks/useBookings.js"
 import { useDonations } from "../hooks/useDonations.js"
 import { sendReminderWhatsApp } from "../utils/whatsapp.js"
+import { genSlots } from "../utils/slots.js"
 
 import { LoginScreen }       from "../components/public/LoginScreen.jsx"
 import { SignupScreen }      from "../components/public/SignupScreen.jsx"
@@ -123,8 +124,12 @@ export default function App() {
     await config.saveStudioName(form.studioName)
     await config.saveColors(form.accent, form.bg)
     if (form.pixKey) await config.savePix({ key:form.pixKey, keyType:form.pixKeyType, holderName:form.pixHolder, bank:"" })
-    const { eventId } = await eventHook.saveEvent({ name:form.eventName||"Meu Evento", date:"", location:form.city, startTime:"10:00", endTime:"20:00", interval:30, capacity:3 })
-    if (eventId) await eventHook.saveSlots(eventHook.slots, eventId)
+    const evForm = { name:form.eventName||"Meu Evento", date:"", location:form.city, startTime:"10:00", endTime:"20:00", interval:30, capacity:3 }
+    const { eventId } = await eventHook.saveEvent(evForm)
+    if (eventId) {
+      const initialSlots = genSlots(evForm.startTime, evForm.endTime, evForm.interval)
+      await eventHook.saveSlots(initialSlots, eventId)
+    }
     setOnboarding(false)
     setAppReady(true)
     showToast("Bem-vindo! Configure seu evento nas Configuracoes.")
