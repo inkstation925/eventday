@@ -11,7 +11,7 @@ export function genSlots(start, end, interval) {
     const h = Math.floor(cur / 60).toString().padStart(2,"0")
     const m = (cur % 60).toString().padStart(2,"0")
     const time = `${h}:${m}`
-    slots.push({ id: `slot-${cur}`, time, blocked: false })
+    slots.push({ id: crypto.randomUUID(), time, blocked: false })
     cur += interval
   }
   return slots

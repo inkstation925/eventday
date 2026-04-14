@@ -64,11 +64,12 @@ export function useEvent(studioId) {
 
   const saveSlots = async (newSlots, eventId) => {
     const eId = eventId || event.id
-    if (!eId) return
+    if (!eId || !studioId) return
     await supabase.from("slots").delete().eq("event_id", eId)
     const rows = newSlots.map(s => ({ id:s.id, event_id:eId, studio_id:studioId, time:s.time, blocked:s.blocked }))
-    await supabase.from("slots").insert(rows)
-    setSlots(newSlots)
+    const { error } = await supabase.from("slots").insert(rows)
+    if (!error) setSlots(newSlots)
+    return { error }
   }
 
   const toggleSlotBlocked = async (slotId) => {
