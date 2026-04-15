@@ -7,6 +7,14 @@ import { genCalendarUrl } from "../../utils/calendar.js"
 
 const maxDob = new Date(new Date().setFullYear(new Date().getFullYear()-18)).toISOString().split("T")[0]
 
+function maskPhone(v) {
+  const d = v.replace(/\D/g, "").slice(0, 11)
+  if (d.length <= 2)  return d.length ? `(${d}` : ""
+  if (d.length <= 6)  return `(${d.slice(0,2)}) ${d.slice(2)}`
+  if (d.length <= 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`
+  return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`
+}
+
 export function BookModal({ slot, event, onBook, onClose, pixConfig, donationConfig, fieldsConfig, isSubmitting }) {
   const fc = { bodyPartEnabled:false, bodyPartLabel:"Informacao adicional", bodyPartPlaceholder:"", field1Enabled:false, sessionLabel:"Atendimento", sinalValor:50, ...fieldsConfig }
   const dc = { enabled:false, itemName:"item", itemNamePlural:"itens", tiers:[], ...donationConfig }
@@ -20,7 +28,8 @@ export function BookModal({ slot, event, onBook, onClose, pixConfig, donationCon
 
   const validate = () => {
     if (!form.name.trim()) return "Nome obrigatorio."
-    if (!form.phone.trim()) return "Telefone obrigatorio."
+    const digits = form.phone.replace(/\D/g, "")
+    if (digits.length < 10) return "Informe um telefone completo com DDD."
     if (form.dob && form.dob > maxDob) return "E preciso ter 18 anos ou mais."
     return ""
   }
@@ -35,7 +44,9 @@ export function BookModal({ slot, event, onBook, onClose, pixConfig, donationCon
     setStep("confirm")
   }
 
-  const pixPayload = genPixPayload(pixConfig, fc.sinalValor)
+  const pixPayload = booking?.id
+    ? genPixPayload(pixConfig, fc.sinalValor, booking.id)
+    : genPixPayload(pixConfig, fc.sinalValor)
   const calUrl = booking ? genCalendarUrl(event, slot.time, form.name, form.bodyPart, fc.bodyPartLabel) : null
 
   return (
@@ -62,7 +73,8 @@ export function BookModal({ slot, event, onBook, onClose, pixConfig, donationCon
           <div style={{ marginBottom:14 }}>
             <label style={lbl}>WhatsApp *</label>
             <input type="tel" placeholder="(11) 99999-9999" value={form.phone}
-              onChange={e=>{ set("phone",e.target.value); setErr("") }} style={inp} />
+              onChange={e=>{ set("phone", maskPhone(e.target.value)); setErr("") }}
+              style={inp} />
           </div>
           <div style={{ marginBottom:14 }}>
             <label style={lbl}>Data de nascimento</label>
